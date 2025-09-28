@@ -1,0 +1,39 @@
+{
+  "name": "ignite-pay-backend",
+  "version": "1.0.0",
+  "description": "Stripe webhook backend for F3 The Capital's Brothers & Brews fundraiser",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "build": "echo 'No build step required'",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:deploy": "prisma migrate deploy",
+    "prisma:studio": "prisma studio"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "stripe": "^14.7.0",
+    "@prisma/client": "^5.7.1",
+    "cors": "^2.8.5",
+    "helmet": "^7.1.0",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2",
+    "prisma": "^5.7.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "stripe",
+    "webhook",
+    "fundraiser",
+    "f3",
+    "brothers-brews"
+  ],
+  "author": "F3 The Capital",
+  "license": "MIT"
+}
