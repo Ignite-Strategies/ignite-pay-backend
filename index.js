@@ -6,8 +6,8 @@ require('dotenv').config();
 const app = express();
 
 // Import routes
-const checkoutRouter = require('./routes/checkout');
-const webhookRouter = require('./routes/webhook');
+const checkoutRouter = require('./routes/checkoutRoute');
+const webhookRouter = require('./routes/webhookRoute');
 
 // CORS configuration
 const corsOptions = {
