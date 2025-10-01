@@ -6,27 +6,152 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mongodb"
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id           String        @id @default(uuid())
-  email        String        @unique
-  name         String?
-  tickets      Int           @default(0)
-  donations    Int           @default(0) // cents
-  createdAt    DateTime      @default(now())
-  transactions Transaction[]
+// EventCustomer - The main customer/donor model
+// Matches Stripe's customer_details object from checkout.session.completed
+model EventCustomer {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  email     String   @unique
+  name      String?  // From Stripe customer_details.name or metadata.paxName
+  phone     String?  // From Stripe customer_details.phone
+  
+  // Location data
+  city      String?  // From billing_details.address.city
+  state     String?  // From billing_details.address.state
+  zip       String?  // From billing_details.address.postal_code
+  country   String?  @default("US") // From billing_details.address.country
+  
+  // F3 specific fields
+  ao        String?  // AO (Area of Operations) - from metadata
+  region    String?  // Region (e.g., "DMV", "The Capital") - from metadata
+  paxName   String?  // F3 pax name if different from real name - from metadata
+  
+  // Stripe customer ID (if we create a customer object)
+  stripeCustomerId String? @unique
+  
+  // Aggregated stats
+  totalDonated     Int      @default(0) // Total in cents
+  ticketsPurchased Int      @default(0) // Number of tickets
+  eventCount       Int      @default(0) // Number of events attended/supported
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  purchases Purchase[]
 }
 
-model Transaction {
-  id          String   @id @default(uuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  amount      Int      // cents
-  type        String   // "ticket" or "donation"
-  region      String
-  stripeId    String   @unique // Stripe checkout session ID
+// Purchase - Individual transaction record
+// Matches Stripe checkout.session.completed event
+model Purchase {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  
+  // Customer relation
+  customerId String        @db.ObjectId
+  customer   EventCustomer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  
+  // Stripe IDs - CRITICAL for reconciliation
+  stripeCheckoutSessionId String  @unique // session.id from checkout.session.completed
+  stripePaymentIntentId   String? @unique // payment_intent from session object
+  stripeCustomerId        String? // customer ID if applicable
+  
+  // Purchase details
+  event         String  // Event slug (e.g., "brosandbrews")
+  eventName     String? // Human-readable event name
+  amount        Int     // Amount in cents (from amount_total)
+  currency      String  @default("usd")
+  
+  // Purchase type
+  type          String  @default("ticket") // "ticket", "donation", "sponsorship"
+  
+  // Payment status - matches Stripe payment_status
+  status        String  @default("pending") // "pending", "paid", "failed", "refunded"
+  
+  // Customer details at time of purchase (for historical record)
+  customerEmail String
+  customerName  String?
+  customerPhone String?
+  
+  // Location at time of purchase
+  city          String?
+  state         String?
+  
+  // F3 metadata (from session.metadata)
+  ao            String?
+  region        String?
+  paxName       String?
+  
+  // Additional metadata (JSON for flexibility)
+  metadata      Json?
+  
+  // Timestamps
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  paidAt        DateTime? // When payment was confirmed
+  
+  @@index([event])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// Event - Event configuration (optional, for multi-event support)
+model Event {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  slug        String   @unique // URL-friendly name (e.g., "brosandbrews")
+  name        String   // Display name
+  description String?
+  
+  // Pricing
+  minAmount   Int      // Minimum donation/ticket price in cents
+  
+  // Event details
+  date        DateTime?
+  location    String?
+  venue       String?
+  
+  // Status
+  active      Boolean  @default(true)
+  capacity    Int?     // Max tickets (null = unlimited)
+  soldCount   Int      @default(0)
+  
+  // Fundraising goal
+  goalAmount  Int?     // Goal in cents
+  raisedAmount Int     @default(0) // Total raised in cents
+  
+  // Timestamps
   createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([active])
+}
+
+// Team - For team fundraising leaderboards
+model Team {
+  id               String   @id @default(auto()) @map("_id") @db.ObjectId
+  name             String   // Team name
+  event            String   // Event slug (e.g., "brosandbrews")
+  
+  // Team leader
+  captainName      String?
+  captainEmail     String?
+  
+  // Fundraising stats
+  totalRaisedCents Int      @default(0) // Total raised by this team
+  memberCount      Int      @default(0) // Number of donors on this team
+  
+  // Metadata
+  ao               String?  // AO affiliation
+  region           String?  // Region
+  
+  // Timestamps
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  
+  @@unique([name, event])
+  @@index([event])
+  @@index([totalRaisedCents])
 }
