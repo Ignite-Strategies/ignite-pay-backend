@@ -3,6 +3,8 @@ const cors = require('cors');
 const helmet = require('helmet');
 require('dotenv').config();
 
+const config = require('./config');
+
 const app = express();
 
 // Import routes
@@ -11,7 +13,7 @@ const webhookRouter = require('./routes/webhookRoute');
 
 // CORS configuration
 const corsOptions = {
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: config.FRONTEND_URL,
   optionsSuccessStatus: 200
 };
 
@@ -56,12 +58,10 @@ app.use('*', (req, res) => {
   res.status(404).json({ error: 'Not found' });
 });
 
-const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`Health check: http://localhost:${PORT}/health`);
-  console.log(`Webhook endpoint: http://localhost:${PORT}/webhook`);
+app.listen(config.PORT, () => {
+  console.log(`Server running on port ${config.PORT}`);
+  console.log(`Health check: http://localhost:${config.PORT}/health`);
+  console.log(`Webhook endpoint: http://localhost:${config.PORT}/webhook`);
 });
 
 // Graceful shutdown

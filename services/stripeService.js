@@ -1,4 +1,5 @@
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const config = require('../config');
+const stripe = require('stripe')(config.STRIPE_SECRET_KEY);
 
 class StripeService {
   static async createCheckoutSession({ event, amount, metadata }) {
@@ -26,7 +27,7 @@ class StripeService {
         quantity: 1,
       }],
       mode: 'payment',
-      return_url: `${process.env.FRONTEND_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
+      return_url: `${config.FRONTEND_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
       
       customer_email: metadata.email,
       billing_address_collection: 'auto',
@@ -54,7 +55,7 @@ class StripeService {
     return stripe.webhooks.constructEvent(
       payload,
       signature,
-      process.env.STRIPE_WEBHOOK_SECRET
+      config.STRIPE_WEBHOOK_SECRET
     );
   }
 }
