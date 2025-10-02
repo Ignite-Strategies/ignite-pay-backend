@@ -5,9 +5,19 @@
  * If you need to change them, change them HERE, not scattered in files
  */
 
+// Ensure FRONTEND_URL always has https://
+const getFrontendUrl = () => {
+  let url = process.env.FRONTEND_URL || 'https://ignite-ticketing.vercel.app';
+  // Add https:// if missing
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    url = 'https://' + url;
+  }
+  return url;
+};
+
 module.exports = {
   // Frontend URL (Vercel)
-  FRONTEND_URL: process.env.FRONTEND_URL || 'https://ignite-ticketing.vercel.app',
+  FRONTEND_URL: getFrontendUrl(),
   
   // Stripe Keys
   STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
