@@ -12,22 +12,27 @@ class StripeService {
       },
     };
 
-    const config = eventConfig[event.toLowerCase()];
+    const eventDetails = eventConfig[event.toLowerCase()];
     
-    if (!config) {
+    if (!eventDetails) {
       throw new Error('Invalid event name');
     }
+
+    // Log the URL being sent to Stripe (for debugging)
+    const returnUrl = `${config.FRONTEND_URL}/success?session_id={CHECKOUT_SESSION_ID}`;
+    console.log('🔵 Stripe return_url:', returnUrl);
+    console.log('🔵 config.FRONTEND_URL:', config.FRONTEND_URL);
 
     // Create Stripe Checkout session (embedded mode)
     const session = await stripe.checkout.sessions.create({
       ui_mode: 'embedded',
       payment_method_types: ['card'],
       line_items: [{
-        price: config.priceId,
+        price: eventDetails.priceId,
         quantity: 1,
       }],
       mode: 'payment',
-      return_url: `${config.FRONTEND_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
+      return_url: returnUrl,
       
       customer_email: metadata.email,
       billing_address_collection: 'auto',
@@ -52,10 +57,11 @@ class StripeService {
   }
 
   static async constructWebhookEvent(payload, signature) {
+    const webhookConfig = require('../config');
     return stripe.webhooks.constructEvent(
       payload,
       signature,
-      config.STRIPE_WEBHOOK_SECRET
+      webhookConfig.STRIPE_WEBHOOK_SECRET
     );
   }
 }
