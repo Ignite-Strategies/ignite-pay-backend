@@ -15,7 +15,7 @@ module.exports = {
   STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
   
   // Database
-  DATABASE_URL: process.env.DATABASE_URL,
+  MONGO_URI: process.env.MONGO_URI,
   
   // Server
   PORT: process.env.PORT || 3000,
@@ -28,6 +28,6 @@ console.log('🔧 Backend CONFIG:', {
   PORT: module.exports.PORT,
   NODE_ENV: module.exports.NODE_ENV,
   STRIPE_SECRET_KEY: module.exports.STRIPE_SECRET_KEY ? '✅ SET' : '❌ MISSING',
-  DATABASE_URL: module.exports.DATABASE_URL ? '✅ SET' : '❌ MISSING',
+  MONGO_URI: module.exports.MONGO_URI ? '✅ SET' : '❌ MISSING',
 });
 
